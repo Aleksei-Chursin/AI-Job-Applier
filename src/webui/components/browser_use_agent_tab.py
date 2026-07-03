@@ -339,7 +339,7 @@ async def run_agent_task(
     ollama_num_ctx = get_setting("ollama_num_ctx", 16000)
     llm_base_url = get_setting("llm_base_url") or None
     llm_api_key = get_setting("llm_api_key") or None
-    max_steps = get_setting("max_steps", 100)
+    max_steps = get_setting("max_steps", 200)
     max_actions = get_setting("max_actions", 10)
     max_input_tokens = get_setting("max_input_tokens", 128000)
     tool_calling_str = get_setting("tool_calling_method", "auto")
@@ -461,11 +461,15 @@ async def run_agent_task(
             else:
                 browser_binary_path = None
 
+            env_browser_path = os.getenv("BROWSER_PATH", "")
+            detected_browser_class = "firefox" if "firefox" in env_browser_path.lower() else "chromium"
+            
             webui_manager.bu_browser = CustomBrowser(
                 config=BrowserConfig(
                     headless=headless,
                     disable_security=disable_security,
                     browser_binary_path=browser_binary_path,
+                    browser_class=detected_browser_class,
                     extra_browser_args=extra_args,
                     wss_url=wss_url,
                     cdp_url=cdp_url,
@@ -542,6 +546,7 @@ async def run_agent_task(
                 tool_calling_method=tool_calling_method,
                 planner_llm=planner_llm,
                 use_vision_for_planner=planner_use_vision if planner_llm else False,
+                available_file_paths=[r"c:\Users\aleks\IdeaProjects\web-ui\Alex_Sought_Java_2026 (1).pdf"],
                 source="webui",
             )
             webui_manager.bu_agent.state.agent_id = webui_manager.bu_agent_task_id

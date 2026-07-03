@@ -98,12 +98,15 @@ class CustomBrowser(Browser):
             ],
         }
 
-        browser = await browser_class.launch(
-            channel='chromium',  # https://github.com/microsoft/playwright/issues/33566
-            headless=self.config.headless,
-            args=args[self.config.browser_class],
-            proxy=self.config.proxy.model_dump() if self.config.proxy else None,
-            handle_sigterm=False,
-            handle_sigint=False,
-        )
+        kwargs = {
+            'headless': self.config.headless,
+            'args': args[self.config.browser_class],
+            'proxy': self.config.proxy.model_dump() if self.config.proxy else None,
+            'handle_sigterm': False,
+            'handle_sigint': False,
+        }
+        if self.config.browser_class == 'chromium':
+            kwargs['channel'] = 'chromium'  # https://github.com/microsoft/playwright/issues/33566
+            
+        browser = await browser_class.launch(**kwargs)
         return browser

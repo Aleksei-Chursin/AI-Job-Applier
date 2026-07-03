@@ -20,3 +20,6 @@ class CustomBrowserContext(BrowserContext):
             state: Optional[BrowserContextState] = None,
     ):
         super(CustomBrowserContext, self).__init__(browser=browser, config=config, state=state)
+        # Firefox does not support clipboard permissions in Playwright
+        if browser.config.browser_class == 'firefox' and self.config.permissions:
+            self.config.permissions = [p for p in self.config.permissions if 'clipboard' not in p]

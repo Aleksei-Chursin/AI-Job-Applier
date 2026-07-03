@@ -1,8 +1,10 @@
 import os
-from distutils.util import strtobool
 import gradio as gr
 import logging
 from gradio.components import Component
+
+def strtobool(val: str) -> bool:
+    return str(val).lower() in ("y", "yes", "t", "true", "on", "1")
 
 from src.webui.webui_manager import WebuiManager
 from src.utils import config
