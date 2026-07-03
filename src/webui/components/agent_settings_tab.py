@@ -64,14 +64,14 @@ def create_agent_settings_tab(webui_manager: WebuiManager):
             llm_provider = gr.Dropdown(
                 choices=[provider for provider, model in config.model_names.items()],
                 label="LLM Provider",
-                value=os.getenv("DEFAULT_LLM", "openai"),
+                value=os.getenv("DEFAULT_LLM", "google"),
                 info="Select LLM provider for LLM",
                 interactive=True
             )
             llm_model_name = gr.Dropdown(
                 label="LLM Model Name",
-                choices=config.model_names[os.getenv("DEFAULT_LLM", "openai")],
-                value=config.model_names[os.getenv("DEFAULT_LLM", "openai")][0],
+                choices=config.model_names[os.getenv("DEFAULT_LLM", "google")],
+                value=config.model_names[os.getenv("DEFAULT_LLM", "google")][0],
                 interactive=True,
                 allow_custom_value=True,
                 info="Select a model in the dropdown options or directly type a custom model name"
@@ -179,7 +179,7 @@ def create_agent_settings_tab(webui_manager: WebuiManager):
         max_steps = gr.Slider(
             minimum=1,
             maximum=1000,
-            value=100,
+            value=200,
             step=1,
             label="Max Run Steps",
             info="Maximum number of steps the agent will take",

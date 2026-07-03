@@ -27,6 +27,11 @@ class WebuiManager:
         self.settings_save_dir = settings_save_dir
         os.makedirs(self.settings_save_dir, exist_ok=True)
 
+        # Airtable in-memory job store (populated at WebUI startup)
+        self.airtable_jobs: List[Dict] = []
+        self.airtable_loaded: bool = False
+        self.ja_stop_requested: bool = False  # stop flag for the job applicator loop
+
     def init_browser_use_agent(self) -> None:
         """
         init browser use agent
