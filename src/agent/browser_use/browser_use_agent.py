@@ -67,19 +67,20 @@ class BrowserUseAgent(Agent):
         signal_handler.register()
 
         try:
-            langfuse = get_client()
-            if hasattr(langfuse, "update_current_trace"):
-                langfuse.update_current_trace(
-                    name=f"BrowserUseAgent: {self.task[:50] if self.task else 'Task'}",
-                    input={"task": self.task, "model": getattr(self.llm, "model_name", str(self.llm))},
-                    session_id=getattr(self.state, "agent_id", None)
-                )
-            elif hasattr(langfuse, "set_current_trace_io"):
-                langfuse.set_current_trace_io(
-                    input={"task": self.task, "model": getattr(self.llm, "model_name", str(self.llm))}
-                )
-        except Exception as exc:
-            logger.debug(f"Failed to update Langfuse trace: {exc}")
+            try:
+                langfuse = get_client()
+                if hasattr(langfuse, "update_current_trace"):
+                    langfuse.update_current_trace(
+                        name=f"BrowserUseAgent: {self.task[:50] if self.task else 'Task'}",
+                        input={"task": self.task, "model": getattr(self.llm, "model_name", str(self.llm))},
+                        session_id=getattr(self.state, "agent_id", None)
+                    )
+                elif hasattr(langfuse, "set_current_trace_io"):
+                    langfuse.set_current_trace_io(
+                        input={"task": self.task, "model": getattr(self.llm, "model_name", str(self.llm))}
+                    )
+            except Exception as exc:
+                logger.debug(f"Failed to update Langfuse trace: {exc}")
 
             self._log_agent_run()
 
