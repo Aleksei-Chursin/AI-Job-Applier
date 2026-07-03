@@ -137,6 +137,7 @@ async def run_single_browser_task(
             browser_context=bu_browser_context,
             controller=bu_controller,
             use_vision=use_vision,
+            available_file_paths=[r"c:\Users\aleks\IdeaProjects\web-ui\Alex_Sought_Java_2026 (1).pdf"],
             source="webui",
         )
 
