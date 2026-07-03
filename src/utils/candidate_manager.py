@@ -18,7 +18,7 @@ STORE_PATH = Path(os.getenv("CANDIDATES_STORE_PATH", "tmp/candidates.json")).res
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 DEFAULT_DATA = {
-    "active_profile": "Tomas Petricek",
+    "active_profile": "Dmytro Makovych",
     "profiles": {
         "Tomas Petricek": {
             "personal": {
@@ -176,6 +176,66 @@ DEFAULT_DATA = {
                     "university": "Warsaw University of Technology",
                     "degree_level": "Master's Degree",
                     "major": "Information and Computer Science",
+                    "graduation_date": "2022",
+                    "status": "Completed / Graduated (2017 - 2022)"
+                }
+            ],
+            "preferences": {
+                "desired_salary": "5,000 EUR",
+                "frequency": "Monthly",
+                "notice_period": "Immediate / 1 month",
+                "availability": "Days, Nights, Weekends, Holidays"
+            }
+        },
+        "Dmytro Makovych": {
+            "personal": {
+                "first_name": "Dmytro",
+                "last_name": "Makovych",
+                "full_name": "Dmytro Makovych",
+                "email": "dmytro.makovych@outlook.com",
+                "phone": "+420 725 134 521",
+                "country": "Czechia",
+                "street_address": "Šaldova 54, Karlín",
+                "zip_code": "186 00",
+                "city": "Praha",
+                "current_location": "Czechia (CEST)",
+                "work_authorization": "Authorized to work in the Czechia / EU (Permanent EU residence, does not require sponsorship).",
+                "electronic_signature": "Dmytro Makovych",
+                "gender": "Male",
+                "veteran": "No",
+                "disability": "No",
+                "date_of_birth": "1995-05-05 (05/05/1995)",
+                "linkedin_url": "https://www.linkedin.com/in/mateus-kowalskii/"
+            },
+            "resume": {
+                "file_path": str(PROJECT_ROOT / "Dmytro_Makovych_Java_2026.pdf"),
+                "filename": "Dmytro_Makovych_Java_2026.pdf"
+            },
+            "credentials": {
+                "default_password": "Metro_l123!",
+                "strong_password": "Metro_l123!@#"
+            },
+            "work_experience": [
+                {
+                    "company": "Deutsche Bank",
+                    "title": "Java developer",
+                    "start_date": "02/2023",
+                    "end_date": "Present",
+                    "description": "Leading the end-to-end development lifecycle of banking platform, enabling system to manage +20M requests daily. Implementing message broker Kafka solutions for 17.5% faster system communication. Introduced reactive programming, which led to 8% reduction in response time and 5% throughput improve. Technologies: Kotlin Flows, Coroutines, Java, GitHub, Jenkins, Docker, PostreSQL, Kafka, RabbitMQ."
+                },
+                {
+                    "company": "Redhat",
+                    "title": "Java Developer",
+                    "start_date": "08/2022",
+                    "end_date": "02/2023",
+                    "description": "Architectured open-source infrastructure tools, leading to a 17% increase in user satisfaction. Increased the number of unit tests from 3,688 to 4,104 to reduce the number of customer reported bugs (I was really tired of dealing with them). Technologies: Kotlin, WebFlux, Coroutines, PostgreSQL, MongoDB, Kubernetes, GitHub Actions."
+                }
+            ],
+            "education": [
+                {
+                    "university": "IGOR SIKORSY UNIVERSITY OF TECHNOLOGY",
+                    "degree_level": "Master's Degree",
+                    "major": "Information and computer science",
                     "graduation_date": "2022",
                     "status": "Completed / Graduated (2017 - 2022)"
                 }
