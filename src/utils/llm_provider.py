@@ -48,15 +48,23 @@ from langchain_openai import AzureChatOpenAI, ChatOpenAI
 from langchain_ibm import ChatWatsonx
 from langchain_aws import ChatBedrock
 from pydantic import SecretStr
+import logging
 
 from src.utils import config
+
+logger = logging.getLogger(__name__)
 
 
 class DeepSeekR1ChatOpenAI(ChatOpenAI):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.client = OpenAI(
+        try:
+            from langfuse.openai import OpenAI as LangfuseOpenAI
+            client_cls = LangfuseOpenAI
+        except Exception:
+            client_cls = OpenAI
+        self.client = client_cls(
             base_url=kwargs.get("base_url"),
             api_key=kwargs.get("api_key")
         )
@@ -151,7 +159,27 @@ class DeepSeekR1ChatOllama(ChatOllama):
 
 def get_llm_model(provider: str, **kwargs):
     """
-    Get LLM model
+    Get LLM model with automatic Langfuse tracing instrumentation.
+    """
+    model = _build_raw_llm_model(provider, **kwargs)
+    try:
+        from langfuse import get_client
+        from langfuse.langchain import CallbackHandler
+        get_client()  # Ensure client is initialized
+        handler = CallbackHandler()
+        if hasattr(model, "callbacks") and model.callbacks is not None:
+            if handler not in model.callbacks:
+                model.callbacks.append(handler)
+        else:
+            model.callbacks = [handler]
+    except Exception as exc:
+        logger.debug("Langfuse callback handler could not be attached: %s", exc)
+    return model
+
+
+def _build_raw_llm_model(provider: str, **kwargs):
+    """
+    Build raw LLM model
     :param provider: LLM provider
     :param kwargs:
     :return:
@@ -239,7 +267,7 @@ def get_llm_model(provider: str, **kwargs):
             )
     elif provider == "google":
         return ChatGoogleGenerativeAI(
-            model=kwargs.get("model_name", "gemini-2.0-flash-exp"),
+            model=kwargs.get("model_name", "gemini-2.5-flash"),
             temperature=kwargs.get("temperature", 0.0),
             api_key=api_key,
         )

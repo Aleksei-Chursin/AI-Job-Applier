@@ -4,7 +4,7 @@ import asyncio
 import logging
 import os
 
-# from lmnr.sdk.decorators import observe
+from langfuse import observe, get_client
 from browser_use.agent.gif import create_history_gif
 from browser_use.agent.service import Agent, AgentHookFunc
 from browser_use.agent.views import (
@@ -44,6 +44,7 @@ class BrowserUseAgent(Agent):
         else:
             return tool_calling_method
 
+    @observe(name="BrowserUseAgent.run", as_type="agent", capture_input=False, capture_output=False)
     @time_execution_async("--run (agent)")
     async def run(
             self, max_steps: int = 100, on_step_start: AgentHookFunc | None = None,
@@ -66,6 +67,20 @@ class BrowserUseAgent(Agent):
         signal_handler.register()
 
         try:
+            langfuse = get_client()
+            if hasattr(langfuse, "update_current_trace"):
+                langfuse.update_current_trace(
+                    name=f"BrowserUseAgent: {self.task[:50] if self.task else 'Task'}",
+                    input={"task": self.task, "model": getattr(self.llm, "model_name", str(self.llm))},
+                    session_id=getattr(self.state, "agent_id", None)
+                )
+            elif hasattr(langfuse, "set_current_trace_io"):
+                langfuse.set_current_trace_io(
+                    input={"task": self.task, "model": getattr(self.llm, "model_name", str(self.llm))}
+                )
+        except Exception as exc:
+            logger.debug(f"Failed to update Langfuse trace: {exc}")
+
             self._log_agent_run()
 
             # Execute initial actions if provided
@@ -160,6 +175,22 @@ class BrowserUseAgent(Agent):
                     logger.error(f'Failed to save Playwright script: {script_gen_err}', exc_info=True)
 
             await self.close()
+
+            try:
+                langfuse = get_client()
+                out_data = {
+                    "steps": len(self.state.history.history) if self.state.history else 0,
+                    "final_result": self.state.history.final_result() if self.state.history else None,
+                    "errors": self.state.history.errors() if self.state.history else None,
+                }
+                if hasattr(langfuse, "update_current_trace"):
+                    langfuse.update_current_trace(output=out_data)
+                elif hasattr(langfuse, "set_current_trace_io"):
+                    langfuse.set_current_trace_io(output=out_data)
+                if hasattr(langfuse, "flush"):
+                    langfuse.flush()
+            except Exception as exc:
+                logger.debug(f"Failed to finalize Langfuse trace: {exc}")
 
             if self.settings.generate_gif:
                 output_path: str = 'agent_history.gif'
