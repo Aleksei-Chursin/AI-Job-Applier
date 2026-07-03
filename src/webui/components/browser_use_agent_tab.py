@@ -530,6 +530,17 @@ async def run_agent_task(
                 raise ValueError(
                     "Browser or Context not initialized, cannot create agent."
                 )
+            from src.utils import candidate_manager
+            try:
+                candidates_data = candidate_manager._load_store().get("profiles", {})
+                available_paths = [
+                    prof.get("resume", {}).get("file_path")
+                    for prof in candidates_data.values()
+                    if prof.get("resume", {}).get("file_path")
+                ]
+            except Exception:
+                available_paths = []
+
             webui_manager.bu_agent = BrowserUseAgent(
                 task=task,
                 llm=main_llm,
@@ -546,7 +557,7 @@ async def run_agent_task(
                 tool_calling_method=tool_calling_method,
                 planner_llm=planner_llm,
                 use_vision_for_planner=planner_use_vision if planner_llm else False,
-                available_file_paths=[r"c:\Users\aleks\IdeaProjects\web-ui\Alex_Sought_Java_2026 (1).pdf"],
+                available_file_paths=available_paths,
                 source="webui",
             )
             webui_manager.bu_agent.state.agent_id = webui_manager.bu_agent_task_id

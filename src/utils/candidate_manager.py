@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 STORE_PATH = Path(os.getenv("CANDIDATES_STORE_PATH", "tmp/candidates.json")).resolve()
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 DEFAULT_DATA = {
     "active_profile": "Tomas Petricek",
     "profiles": {
@@ -37,7 +39,7 @@ DEFAULT_DATA = {
                 "disability": "No"
             },
             "resume": {
-                "file_path": r"c:\Users\aleks\IdeaProjects\web-ui\Tomáš_Petříček_Java_2026.pdf",
+                "file_path": str(PROJECT_ROOT / "Tomáš_Petříček_Java_2026.pdf"),
                 "filename": "Tomáš_Petříček_Java_2026.pdf"
             },
             "credentials": {
@@ -95,7 +97,7 @@ DEFAULT_DATA = {
                 "disability": "No"
             },
             "resume": {
-                "file_path": r"c:\Users\aleks\IdeaProjects\web-ui\Alex_Sought_Java_2026 (1).pdf",
+                "file_path": str(PROJECT_ROOT / "Alex_Sought_Java_2026 (1).pdf"),
                 "filename": "Alex_Sought_Java_2026 (1).pdf"
             },
             "credentials": {
@@ -146,7 +148,7 @@ DEFAULT_DATA = {
                 "disability": "No"
             },
             "resume": {
-                "file_path": r"C:\Users\aleks\IdeaProjects\web-ui\Mateusz_Kowalski_Java_2026.pdf",
+                "file_path": str(PROJECT_ROOT / "Mateusz_Kowalski_Java_2026.pdf"),
                 "filename": "Mateusz_Kowalski_Java_2026.pdf"
             },
             "credentials": {

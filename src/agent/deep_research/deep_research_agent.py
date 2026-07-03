@@ -130,6 +130,17 @@ async def run_single_browser_task(
         PDF cannot directly extract _content, please try to download first, then using read_file, if you can't save or read, please try other methods.
         """
 
+        from src.utils import candidate_manager
+        try:
+            candidates_data = candidate_manager._load_store().get("profiles", {})
+            available_paths = [
+                prof.get("resume", {}).get("file_path")
+                for prof in candidates_data.values()
+                if prof.get("resume", {}).get("file_path")
+            ]
+        except Exception:
+            available_paths = []
+
         bu_agent_instance = BrowserUseAgent(
             task=bu_task_prompt,
             llm=llm,  # Use the passed LLM
@@ -137,7 +148,7 @@ async def run_single_browser_task(
             browser_context=bu_browser_context,
             controller=bu_controller,
             use_vision=use_vision,
-            available_file_paths=[r"c:\Users\aleks\IdeaProjects\web-ui\Alex_Sought_Java_2026 (1).pdf"],
+            available_file_paths=available_paths,
             source="webui",
         )
 
