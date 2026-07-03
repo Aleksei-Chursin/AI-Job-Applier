@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 _BASE_URL = "https://api.airtable.com/v0"
 _BASE_ID = os.getenv("AIRTABLE_BASE_ID", "appJgpsg8NxzRHWxK")
-_TABLE = os.getenv("AIRTABLE_TABLE_NAME", "Table 1")
+_TABLE = os.getenv("AIRTABLE_TABLE_NAME", "Job Table")
 _TOKEN = os.getenv("AIRTABLE_API_KEY", "")
 
 # Column names (match Airtable exactly)
@@ -29,7 +29,8 @@ COL_TITLE = "Title"
 COL_JOB_DESC = "Job Description"
 COL_JOB_LINK = "Job Link"
 COL_JOB_DATE = "Job Date"
-COL_APPLIED = "Applied"
+COL_STATE = "State"
+COL_ERROR_MSG = "Error Message"
 
 
 # ---------------------------------------------------------------------------
@@ -69,8 +70,7 @@ def _raise_for_status(resp: requests.Response) -> None:
 
 def get_unapplied_jobs() -> list[dict[str, Any]]:
     """
-    Fetch all records from Airtable where the 'Applied' checkbox is NOT checked
-    and no automation error has been logged in 'Job Link'.
+    Fetch all records from Airtable where 'State' = 'new'.
     Returns a list of dicts:
         [
             {
@@ -85,8 +85,8 @@ def get_unapplied_jobs() -> list[dict[str, Any]]:
     """
     url = _table_url()
     params: dict[str, Any] = {
-        "filterByFormula": f"NOT({{{COL_APPLIED}}})",
-        "fields[]": [COL_TITLE, COL_JOB_DESC, COL_JOB_LINK, COL_JOB_DATE],
+        "filterByFormula": f"{{{COL_STATE}}} = 'new'",
+        "fields[]": [COL_TITLE, COL_JOB_DESC, COL_JOB_LINK, COL_JOB_DATE, COL_STATE],
     }
 
     jobs: list[dict[str, Any]] = []
@@ -103,14 +103,6 @@ def get_unapplied_jobs() -> list[dict[str, Any]]:
 
         for record in data.get("records", []):
             fields = record.get("fields", {})
-            job_link = str(fields.get(COL_JOB_LINK, "") or "")
-            job_desc = str(fields.get(COL_JOB_DESC, "") or "")
-
-            # Filter out jobs that have an error logged in Job Link
-            if "[Automation Error:" in job_link or "[Error:" in job_link or "Automation Error" in job_link:
-                logger.info("Skipping record %s (%s) because it has an error log in Job Link.", record["id"], fields.get(COL_TITLE, ""))
-                continue
-
             jobs.append(
                 {
                     "id": record["id"],
@@ -125,16 +117,16 @@ def get_unapplied_jobs() -> list[dict[str, Any]]:
         if not offset:
             break
 
-    logger.info("Loaded %d unapplied job(s) from Airtable.", len(jobs))
+    logger.info("Loaded %d new job(s) from Airtable.", len(jobs))
     return jobs
 
 
 def mark_as_applied(record_id: str) -> None:
     """
-    Set the 'Applied' checkbox to true for the given record.
+    Set 'State' to 'applied' for the given record.
     """
     url = f"{_table_url()}/{record_id}"
-    payload = {"fields": {COL_APPLIED: True}}
+    payload = {"fields": {COL_STATE: "applied"}}
     logger.info("Marking record %s as applied.", record_id)
     resp = requests.patch(url, headers=_headers(), json=payload, timeout=30)
     _raise_for_status(resp)
@@ -143,24 +135,19 @@ def mark_as_applied(record_id: str) -> None:
 
 def log_error(record_id: str, error_msg: str) -> None:
     """
-    Append an automation error note to the 'Job Link' field.
-    Reads the existing value first to avoid overwriting it.
+    Write the error message to 'Error Message' and set 'State' to 'error'.
     """
-    # Read current value
     url = f"{_table_url()}/{record_id}"
-    resp = requests.get(url, headers=_headers(), timeout=30)
-    _raise_for_status(resp)
-    current_fields = resp.json().get("fields", {})
-    existing = current_fields.get(COL_JOB_LINK, "") or ""
-
-    note = f"[Automation Error: {error_msg}]"
-    new_value = f"{existing} | {note}".strip(" |") if existing else note
-
-    payload = {"fields": {COL_JOB_LINK: new_value}}
+    payload = {
+        "fields": {
+            COL_STATE: "error",
+            COL_ERROR_MSG: error_msg
+        }
+    }
     logger.warning("Logging error for record %s: %s", record_id, error_msg)
     resp = requests.patch(url, headers=_headers(), json=payload, timeout=30)
     _raise_for_status(resp)
-    logger.info("Error logged for record %s ✓", record_id)
+    logger.info("Error logged and state set to 'error' for record %s ✓", record_id)
 
 
 def reload_jobs() -> list[dict[str, Any]]:

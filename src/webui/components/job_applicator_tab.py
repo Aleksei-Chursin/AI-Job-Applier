@@ -39,6 +39,7 @@ def _build_task_prompt(job: dict, profile: dict = None) -> str:
         profile = candidate_manager.get_active_profile()
 
     title = job.get("title", "Unknown Role")
+    job_link = job.get("job_link", "")
     p = profile.get("personal", {})
     r = profile.get("resume", {})
     cred = profile.get("credentials", {})
@@ -58,12 +59,13 @@ def _build_task_prompt(job: dict, profile: dict = None) -> str:
     return f"""Apply to the job below using the provided candidate profile.
 
 JOB TITLE: {title}
+LINKEDIN JOB POST LINK: {job_link} (CRITICAL: ALWAYS ignore this link. Do NOT navigate to or click this URL. It is a LinkedIn page, which must be ignored. You must search Google for the official company website or direct ATS portal to apply.)
 
 {candidate_profile_text}
 
 === CORE RULES & TOOLS ===
-1. SEARCH: Search Google for "<company> Prague Java Developer job apply" or "<company> Prague careers".
-   CRITICAL: NEVER click LinkedIn, Indeed, Glassdoor, or job board links. Only click official company career pages or direct ATS application links (Workday, Greenhouse, Lever, Teamio, SmartRecruiters).
+1. SEARCH: Search Google for the official careers page or direct ATS portal of the company using the Job Title or info from the LinkedIn link.
+   CRITICAL: ALWAYS ignore any LinkedIn link. Do NOT navigate to it. NEVER click LinkedIn, Indeed, Glassdoor, or job board links. Only click official company career pages or direct ATS application links (Workday, Greenhouse, Lever, Teamio, SmartRecruiters).
 2. CREDENTIALS & LOGIN:
    - On any login/signup screen, immediately call `lookup_site_credentials(url)`. If found, log in.
    - Otherwise, register using Email: {email}, Password: {default_pw} (or {strong_pw}), Full Name: {full_name}.
