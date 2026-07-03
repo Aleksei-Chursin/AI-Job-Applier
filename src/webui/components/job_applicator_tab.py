@@ -53,7 +53,7 @@ def _build_task_prompt(job: dict, profile: dict = None) -> str:
     default_pw = cred.get("default_password", "Metro_l123!")
     strong_pw = cred.get("strong_password", "Metro_l123!@#")
     resume_filename = r.get("filename", "Resume.pdf")
-    linkedin = p.get("linkedin_url", "https://www.linkedin.com/in/mateus-kowalskii/")
+    linkedin = p.get("linkedin_url", "")
     candidate_profile_text = candidate_manager.format_candidate_profile_prompt(profile)
 
     return f"""Apply to the job below using the provided candidate profile.

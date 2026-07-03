@@ -342,7 +342,7 @@ def format_candidate_profile_prompt(profile: Dict[str, Any]) -> str:
     if p.get("work_authorization"): lines.append(f"- Work Authorization: {p['work_authorization']}")
     dob = p.get("date_of_birth", "1995-05-05 (05/05/1995)")
     lines.append(f"- Date of Birth: {dob}")
-    linkedin = p.get("linkedin_url", "https://www.linkedin.com/in/mateus-kowalskii/")
+    linkedin = p.get("linkedin_url", "")
     lines.append(f"- LinkedIn Profile URL: {linkedin} (If requested by the form, enter this exact URL)")
 
     lines.append("")
