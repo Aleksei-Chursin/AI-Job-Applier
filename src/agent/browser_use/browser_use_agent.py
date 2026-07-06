@@ -36,6 +36,13 @@ class BrowserUseAgent(Agent):
             elif self.chat_model_library == 'ChatGoogleGenerativeAI':
                 return None
             elif self.chat_model_library == 'ChatOpenAI':
+                # GPT-5+ and o-series models support structured outputs natively.
+                # json_schema sends one compact output schema per request instead
+                # of a full tool definition for every registered action, which
+                # significantly reduces payload size and latency.
+                model = (self.model_name or '').lower()
+                if any(model.startswith(p) for p in ('gpt-5', 'o1', 'o3', 'o4')):
+                    return 'json_schema'
                 return 'function_calling'
             elif self.chat_model_library == 'AzureChatOpenAI':
                 return 'function_calling'
