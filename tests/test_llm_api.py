@@ -1,5 +1,4 @@
 import os
-import pdb
 from dataclasses import dataclass
 
 from dotenv import load_dotenv
@@ -65,8 +64,6 @@ def test_llm(config, query, image_path=None, system_message=None):
 
         ai_msg = llm.invoke(query)
         print(ai_msg.content)
-        if "deepseek-r1" in config.model_name:
-            pdb.set_trace()
         return
 
     # For other providers, use the standard configuration

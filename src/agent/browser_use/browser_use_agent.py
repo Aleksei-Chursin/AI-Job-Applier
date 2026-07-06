@@ -90,10 +90,12 @@ class BrowserUseAgent(Agent):
                 self.state.last_result = result
 
             for step in range(max_steps):
-                # Check if waiting for user input after Ctrl+C
-                if self.state.paused:
-                    signal_handler.wait_for_resume()
-                    signal_handler.reset()
+                # Check if waiting for user input after Ctrl+C.
+                # Use an async loop so the event loop is never blocked.
+                while self.state.paused:
+                    await asyncio.sleep(0.2)
+                    if self.state.stopped:
+                        break
 
                 # Check if we should stop due to too many failures
                 if self.state.consecutive_failures >= self.settings.max_failures:

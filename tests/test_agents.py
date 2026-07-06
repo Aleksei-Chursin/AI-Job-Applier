@@ -1,5 +1,3 @@
-import pdb
-
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -310,8 +308,6 @@ async def test_browser_use_parallel():
 
         print("\nErrors:")
         pprint(history.errors(), indent=4)
-
-        pdb.set_trace()
 
     except Exception:
         import traceback

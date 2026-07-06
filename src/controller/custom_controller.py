@@ -1,5 +1,3 @@
-import pdb
-
 import pyperclip
 from typing import Optional, Type, Callable, Dict, Any, Union, Awaitable, TypeVar
 from pydantic import BaseModel
@@ -271,7 +269,7 @@ class CustomController(Controller):
                     ]:
                         try:
                             loc = frame.locator(selector).first
-                            if await loc.is_visible(timeout=1000):
+                            if await loc.is_visible(timeout=200):
                                 await loc.click()
                                 clicked = True
                                 logger.info("Clicked CAPTCHA checkbox in frame: %s using selector %s", frame.url, selector)
@@ -300,7 +298,7 @@ class CustomController(Controller):
                     for selector in ["#recaptcha-audio-button", ".rc-button-audio", "button[title*='audio' i]"]:
                         try:
                             btn = frame.locator(selector).first
-                            if await btn.is_visible(timeout=1000):
+                            if await btn.is_visible(timeout=200):
                                 await btn.click()
                                 audio_clicked = True
                                 logger.info("Clicked Audio CAPTCHA button in frame %s", frame.url)

@@ -1,5 +1,4 @@
 import asyncio
-import pdb
 import sys
 import time
 
@@ -49,7 +48,6 @@ async def test_mcp_client():
         print(tool.name)
         print(tool.description)
         print(tool_param_model.model_json_schema())
-    pdb.set_trace()
 
 
 async def test_controller_with_mcp():
@@ -117,13 +115,10 @@ async def test_controller_with_mcp():
             result = await controller.act(action_model)
             result = result.extracted_content
             if result:
-                pdb.set_trace()
                 output_result = result
                 break
         print(output_result)
-        pdb.set_trace()
     await controller.close_mcp_client()
-    pdb.set_trace()
 
 
 if __name__ == '__main__':
