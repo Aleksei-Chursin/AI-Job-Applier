@@ -273,14 +273,39 @@ async def _run_batch(
         success = False
         error_msg = ""
 
-        # --- Clean up browser tabs before starting a new job ---
-        if webui_manager.bu_browser_context:
+        # --- Clean up browser state before starting a new job ---
+        # We close and recreate the context rather than calling reset_context().
+        # reset_context() closes individual pages while the Playwright CDP
+        # connection's background task may still dispatch messages for those
+        # pages, producing a KeyError that kills the entire Playwright connection.
+        # Closing the whole context and creating a fresh one avoids that race.
+        if webui_manager.bu_browser_context is not None:
             try:
-                await webui_manager.bu_browser_context.reset_context()
-                await webui_manager.bu_browser_context.create_new_tab("about:blank")
-                logger.info("Reset browser context and opened blank tab for job %s", title)
-            except Exception as reset_exc:
-                logger.warning("Could not reset browser tabs before job: %s", reset_exc)
+                # Access the underlying Playwright context and close it cleanly.
+                pw_ctx = getattr(webui_manager.bu_browser_context, "context", None)
+                if pw_ctx is not None:
+                    await pw_ctx.close()
+                else:
+                    # Fallback: browser-use BrowserContext may expose close() directly
+                    await webui_manager.bu_browser_context.close()
+                logger.info("Closed browser context before job '%s'", title)
+            except Exception as close_exc:
+                logger.warning("Could not close browser context: %s", close_exc)
+            finally:
+                webui_manager.bu_browser_context = None
+
+        if webui_manager.bu_browser is not None:
+            try:
+                webui_manager.bu_browser_context = await webui_manager.bu_browser.new_context(
+                    config=BrowserContextConfig(window_width=1920, window_height=1080)
+                )
+                logger.info("Created fresh browser context for job '%s'", title)
+            except Exception as ctx_exc:
+                logger.error("Failed to create browser context for job '%s': %s", title, ctx_exc)
+                rows[idx][2] = "❌ Browser Error"
+                log_lines.append(f"   💥 Browser context error: {ctx_exc}")
+                yield {log_box: gr.update(value="\n".join(log_lines)), table_comp: gr.update(value=rows)}
+                continue
 
         try:
             agent = BrowserUseAgent(

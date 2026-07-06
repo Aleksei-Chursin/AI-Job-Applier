@@ -1,5 +1,4 @@
 from openai import OpenAI
-import pdb
 from langchain_openai import ChatOpenAI
 from langchain_core.globals import get_llm_cache
 from langchain_core.language_models.base import (
@@ -53,6 +52,16 @@ import logging
 from src.utils import config
 
 logger = logging.getLogger(__name__)
+
+# Models that reject any temperature value other than the API default (1).
+# Passing temperature= for these causes a 400 "unsupported_value" error.
+_TEMPERATURE_UNSUPPORTED_PREFIXES = ("o1", "o3", "o4", "gpt-5")
+
+
+def _supports_temperature(model_name: str) -> bool:
+    """Return False for OpenAI reasoning/next-gen models that reject custom temperature."""
+    name = model_name.lower().strip()
+    return not any(name.startswith(p) for p in _TEMPERATURE_UNSUPPORTED_PREFIXES)
 
 
 class DeepSeekR1ChatOpenAI(ChatOpenAI):
@@ -227,12 +236,15 @@ def _build_raw_llm_model(provider: str, **kwargs):
         else:
             base_url = kwargs.get("base_url")
 
-        return ChatOpenAI(
-            model=kwargs.get("model_name", "gpt-4o"),
-            temperature=kwargs.get("temperature", 0.0),
+        model_name = kwargs.get("model_name", "gpt-4o")
+        openai_kwargs: dict = dict(
+            model=model_name,
             base_url=base_url,
             api_key=api_key,
         )
+        if _supports_temperature(model_name):
+            openai_kwargs["temperature"] = kwargs.get("temperature", 0.0)
+        return ChatOpenAI(**openai_kwargs)
     elif provider == "grok":
         if not kwargs.get("base_url", ""):
             base_url = os.getenv("GROK_ENDPOINT", "https://api.x.ai/v1")
