@@ -341,6 +341,13 @@ async def _run_batch(
                 max_actions_per_step=10,
                 available_file_paths=file_paths,
                 source="webui",
+                # Disable mem0 procedural-memory consolidation.
+                # Each consolidation makes a full LLM call that can block the
+                # asyncio event loop for 100+ seconds with GPT-5.5, causing the
+                # Playwright CDP connection to time out and killing the browser.
+                # With max_input_tokens=128000 the context window is large
+                # enough to hold the full conversation without compression.
+                enable_memory=False,
             )
             agent.state.agent_id = task_id
 

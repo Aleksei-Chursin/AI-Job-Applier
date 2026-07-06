@@ -559,6 +559,7 @@ async def run_agent_task(
                 use_vision_for_planner=planner_use_vision if planner_llm else False,
                 available_file_paths=available_paths,
                 source="webui",
+                enable_memory=False,
             )
             webui_manager.bu_agent.state.agent_id = webui_manager.bu_agent_task_id
             webui_manager.bu_agent.settings.generate_gif = gif_path
