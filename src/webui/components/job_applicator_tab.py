@@ -274,38 +274,60 @@ async def _run_batch(
         error_msg = ""
 
         # --- Clean up browser state before starting a new job ---
-        # We close and recreate the context rather than calling reset_context().
-        # reset_context() closes individual pages while the Playwright CDP
-        # connection's background task may still dispatch messages for those
-        # pages, producing a KeyError that kills the entire Playwright connection.
-        # Closing the whole context and creating a fresh one avoids that race.
+        # Strategy: close and recreate the Playwright context rather than
+        # reset_context(). reset_context() closes individual pages while the
+        # CDP background task may still be dispatching messages for them,
+        # producing KeyError('page@...') that kills the whole connection.
+        #
+        # Additionally, agent.close() in the previous job's finally-block
+        # can tear down the shared browser process. We detect that by catching
+        # TargetClosedError when creating a new context, then rebuilding the
+        # browser from scratch before retrying.
+
+        # 1. Discard the old context object (already closed by agent.close()).
         if webui_manager.bu_browser_context is not None:
             try:
-                # Access the underlying Playwright context and close it cleanly.
                 pw_ctx = getattr(webui_manager.bu_browser_context, "context", None)
                 if pw_ctx is not None:
                     await pw_ctx.close()
-                else:
-                    # Fallback: browser-use BrowserContext may expose close() directly
-                    await webui_manager.bu_browser_context.close()
-                logger.info("Closed browser context before job '%s'", title)
-            except Exception as close_exc:
-                logger.warning("Could not close browser context: %s", close_exc)
-            finally:
-                webui_manager.bu_browser_context = None
+            except Exception:
+                pass
+            webui_manager.bu_browser_context = None
 
-        if webui_manager.bu_browser is not None:
+        # 2. Try to open a fresh context on the existing browser.
+        #    If the browser process died, recreate it and retry once.
+        for attempt in range(2):
+            if webui_manager.bu_browser is None or attempt == 1:
+                # (Re)create the browser from scratch.
+                logger.info("(Re)creating browser for job '%s' (attempt %d)", title, attempt + 1)
+                webui_manager.bu_browser = CustomBrowser(
+                    config=BrowserConfig(
+                        headless=False,
+                        disable_security=False,
+                        browser_binary_path=browser_path if use_own_browser else None,
+                        browser_class=browser_class,
+                        extra_browser_args=extra_args,
+                        cdp_url=os.getenv("BROWSER_CDP") or None,
+                        new_context_config=BrowserContextConfig(window_width=1920, window_height=1080),
+                    )
+                )
             try:
                 webui_manager.bu_browser_context = await webui_manager.bu_browser.new_context(
                     config=BrowserContextConfig(window_width=1920, window_height=1080)
                 )
                 logger.info("Created fresh browser context for job '%s'", title)
+                break
             except Exception as ctx_exc:
-                logger.error("Failed to create browser context for job '%s': %s", title, ctx_exc)
-                rows[idx][2] = "❌ Browser Error"
-                log_lines.append(f"   💥 Browser context error: {ctx_exc}")
-                yield {log_box: gr.update(value="\n".join(log_lines)), table_comp: gr.update(value=rows)}
-                continue
+                logger.warning("Browser context creation failed (attempt %d): %s", attempt + 1, ctx_exc)
+                # Mark browser as dead so next iteration rebuilds it.
+                webui_manager.bu_browser = None
+                webui_manager.bu_browser_context = None
+                if attempt == 1:
+                    logger.error("Could not create browser context after rebuild for job '%s'", title)
+                    rows[idx][2] = "❌ Browser Error"
+                    log_lines.append(f"   💥 Browser unavailable: {ctx_exc}")
+                    yield {log_box: gr.update(value="\n".join(log_lines)), table_comp: gr.update(value=rows)}
+                    continue
 
         try:
             agent = BrowserUseAgent(
