@@ -39,8 +39,8 @@ DEFAULT_DATA = {
                 "disability": "No"
             },
             "resume": {
-                "file_path": str(PROJECT_ROOT / "Tomáš_Petříček_Java_2026.pdf"),
-                "filename": "Tomáš_Petříček_Java_2026.pdf"
+                "file_path": str(PROJECT_ROOT / "Tomas_Petricek_Java_2026.pdf"),
+                "filename": "Tomas_Petricek_Java_2026.pdf"
             },
             "credentials": {
                 "default_password": "Metro_l123!",
@@ -318,6 +318,33 @@ def save_profile(name: str, profile_data: Dict[str, Any], set_active: bool = Fal
     if set_active or not data.get("active_profile"):
         data["active_profile"] = name
     _save_store(data)
+
+
+def resolve_resume_path(profile: Dict[str, Any]) -> str:
+    """Return the resume file path for *profile*, resolving it robustly.
+
+    Priority order:
+    1. The stored ``file_path`` value, if it points to an existing file.
+    2. A file named ``filename`` located directly in PROJECT_ROOT.
+    3. Empty string when neither resolves to an existing file.
+
+    This handles the common case where ``tmp/candidates.json`` was saved on a
+    different machine (different OS user or project location) and the absolute
+    path no longer matches the current environment.
+    """
+    resume = profile.get("resume", {})
+    stored_path = resume.get("file_path", "")
+    filename = resume.get("filename", "")
+
+    if stored_path and os.path.exists(stored_path):
+        return stored_path
+
+    if filename:
+        fallback = PROJECT_ROOT / filename
+        if fallback.exists():
+            return str(fallback)
+
+    return ""
 
 
 def format_candidate_profile_prompt(profile: Dict[str, Any]) -> str:

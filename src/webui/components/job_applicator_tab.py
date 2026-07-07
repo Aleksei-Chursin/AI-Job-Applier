@@ -263,8 +263,8 @@ async def _run_batch(
 
         active_prof = candidate_manager.get_active_profile()
         task_prompt = _build_task_prompt(job, active_prof)
-        resume_file = active_prof.get("resume", {}).get("file_path", "")
-        file_paths = [resume_file] if resume_file and os.path.exists(resume_file) else []
+        resume_file = candidate_manager.resolve_resume_path(active_prof)
+        file_paths = [resume_file] if resume_file else []
 
         task_id = str(uuid.uuid4())
         history_dir = os.path.join(save_path, task_id)

@@ -534,9 +534,11 @@ async def run_agent_task(
             try:
                 candidates_data = candidate_manager._load_store().get("profiles", {})
                 available_paths = [
-                    prof.get("resume", {}).get("file_path")
-                    for prof in candidates_data.values()
-                    if prof.get("resume", {}).get("file_path")
+                    p for p in (
+                        candidate_manager.resolve_resume_path(prof)
+                        for prof in candidates_data.values()
+                    )
+                    if p
                 ]
             except Exception:
                 available_paths = []
