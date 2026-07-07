@@ -53,6 +53,8 @@ def _build_task_prompt(job: dict, profile: dict = None) -> str:
     default_pw = cred.get("default_password", "Metro_l123!")
     strong_pw = cred.get("strong_password", "Metro_l123!@#")
     resume_filename = r.get("filename", "Resume.pdf")
+    # Resolve the full path so upload_file can match it without relying on CWD
+    resume_full_path = candidate_manager.resolve_resume_path(profile) or resume_filename
     linkedin = p.get("linkedin_url", "")
     candidate_profile_text = candidate_manager.format_candidate_profile_prompt(profile)
 
@@ -71,7 +73,7 @@ LINKEDIN JOB POST LINK: {job_link} (CRITICAL: ALWAYS ignore this link. Do NOT na
    - Otherwise, register using Email: {email}, Password: {default_pw} (or {strong_pw}), Full Name: {full_name}.
    - After registering, immediately call `save_site_credentials(url, email, password, note)`.
 3. EMAIL VERIFICATION: If prompted for an email verification code sent to {email}, do NOT navigate away. Call `read_verification_email` to retrieve the code or link.
-4. RESUME UPLOAD (CRITICAL): NEVER click file upload buttons (`click_element` opens an OS popup that freezes the browser). ALWAYS call `upload_file(index, "{resume_filename}")` directly on the upload element. Wait 3s for auto-fill.
+4. RESUME UPLOAD (CRITICAL): NEVER click file upload buttons (`click_element` opens an OS popup that freezes the browser). ALWAYS call `upload_file(index, "{resume_full_path}")` directly on the upload element. Wait 3s for auto-fill.
 5. FORM FILLING:
    - Fill ONLY required/mandatory fields using the profile. Skip optional fields.
    - Date of Birth: Type "1995-05-05" or "05/05/1995" directly into text inputs before trying visual pickers.
@@ -264,6 +266,14 @@ async def _run_batch(
         active_prof = candidate_manager.get_active_profile()
         task_prompt = _build_task_prompt(job, active_prof)
         resume_file = candidate_manager.resolve_resume_path(active_prof)
+        if not resume_file:
+            stored = active_prof.get("resume", {}).get("file_path", "")
+            filename = active_prof.get("resume", {}).get("filename", "")
+            logger.warning(
+                "Resume file not found on disk! stored_path=%r filename=%r — "
+                "place '%s' in the project root folder or update file_path in the profile.",
+                stored, filename, filename,
+            )
         file_paths = [resume_file] if resume_file else []
 
         task_id = str(uuid.uuid4())

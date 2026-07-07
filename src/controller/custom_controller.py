@@ -79,10 +79,30 @@ class CustomController(Controller):
         async def upload_file(index: int, path: str, browser: BrowserContext, available_file_paths: list[str]):
             norm_path = os.path.normcase(os.path.abspath(path))
             avail_map = {os.path.normcase(os.path.abspath(p)): p for p in available_file_paths}
-            if norm_path not in avail_map:
-                return ActionResult(error=f'File path {path} is not available')
 
-            actual_path = avail_map[norm_path]
+            # Primary match: full normalised absolute path
+            actual_path = avail_map.get(norm_path)
+
+            # Fallback: match by filename only so the agent can pass just the
+            # basename (e.g. "Tomas_Petricek_Java_2026.pdf") and still resolve
+            # to the correct absolute path in available_file_paths.
+            if actual_path is None:
+                norm_basename = os.path.normcase(os.path.basename(path))
+                for avail_norm, avail_orig in avail_map.items():
+                    if os.path.normcase(os.path.basename(avail_norm)) == norm_basename:
+                        actual_path = avail_orig
+                        logger.info(
+                            "upload_file: resolved '%s' by basename to '%s'",
+                            path, avail_orig,
+                        )
+                        break
+
+            if actual_path is None:
+                return ActionResult(
+                    error=f'File path "{path}" is not available. '
+                          f'Available files: {list(avail_map.values())}'
+                )
+
             if not os.path.exists(actual_path):
                 return ActionResult(error=f'File {actual_path} does not exist')
 
