@@ -7,6 +7,7 @@ from src.webui.components.browser_use_agent_tab import create_browser_use_agent_
 from src.webui.components.deep_research_agent_tab import create_deep_research_agent_tab
 from src.webui.components.load_save_config_tab import create_load_save_config_tab
 from src.webui.components.job_applicator_tab import create_job_applicator_tab
+from src.webui.components.setup_tab import create_setup_tab
 
 theme_map = {
     "Default": gr.themes.Default(),
@@ -70,6 +71,9 @@ def create_ui(theme_name="Ocean"):
             )
 
         with gr.Tabs() as tabs:
+            with gr.TabItem("🔑 Setup"):
+                create_setup_tab()
+
             with gr.TabItem("⚙️ Agent Settings"):
                 create_agent_settings_tab(ui_manager)
 
