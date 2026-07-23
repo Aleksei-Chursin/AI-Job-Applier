@@ -97,7 +97,7 @@ def get_active_profile_name() -> str:
     if active and active in data.get("profiles", {}):
         return active
     names = get_all_profile_names()
-    return names[0] if names else "Tomas Petricek"
+    return names[0] if names else "My Profile"
 
 
 def set_active_profile(name: str) -> bool:
@@ -113,7 +113,7 @@ def set_active_profile(name: str) -> bool:
 def get_active_profile() -> Dict[str, Any]:
     data = _load_store()
     active = get_active_profile_name()
-    return data.get("profiles", {}).get(active, DEFAULT_DATA["profiles"]["Tomas Petricek"])
+    return data.get("profiles", {}).get(active, DEFAULT_DATA["profiles"]["My Profile"])
 
 
 def get_profile_by_name(name: str) -> Dict[str, Any]:
