@@ -1,0 +1,16 @@
+{
+  "name": "AI Job Applier",
+  "install": "bash .cursor/install.sh",
+  "terminals": [
+    {
+      "name": "web-ui",
+      "command": "source .venv/bin/activate && python webui.py --ip 0.0.0.0 --port 7788"
+    }
+  ],
+  "ports": [
+    {
+      "name": "web-ui",
+      "port": 7788
+    }
+  ]
+}
